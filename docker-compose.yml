@@ -1,0 +1,41 @@
+name: devops-java-demo
+
+services:
+  mysqldb:
+    image: mysql:8.4
+    container_name: mysql_database
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: "root@123"
+      MYSQL_DATABASE: trishadb
+      MYSQL_USER: trisha
+      MYSQL_PASSWORD: "trisha@123"
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - devops-net
+
+  app:
+    build: .
+    image: devops-java-demo:1.0.0
+    container_name: devops-java-demo
+    restart: unless-stopped
+    environment:
+      SPRING_DATASOURCE_URL: "jdbc:mysql://mysqldb:3306/trishadb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
+      SPRING_DATASOURCE_USERNAME: trisha
+      SPRING_DATASOURCE_PASSWORD: "trisha@123"
+    ports:
+      - "9090:9090"
+    depends_on:
+      - mysqldb
+    networks:
+      - devops-net
+
+volumes:
+  mysql_data:
+
+networks:
+  devops-net:
+    driver: bridge
