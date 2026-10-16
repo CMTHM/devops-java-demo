@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<checkstyle version="10.23.1">
+<file name="D:\TRISHA-ACADEMY\DevOPs\devops-java-demo\src\main\java\com\trisha\academy\springlab\config\OpenApiConfig.java">
+</file>
+<file name="D:\TRISHA-ACADEMY\DevOPs\devops-java-demo\src\main\java\com\trisha\academy\springlab\controller\StudentController.java">
+</file>
+<file name="D:\TRISHA-ACADEMY\DevOPs\devops-java-demo\src\main\java\com\trisha\academy\springlab\controller\WelcomeController.java">
+</file>
+<file name="D:\TRISHA-ACADEMY\DevOPs\devops-java-demo\src\main\java\com\trisha\academy\springlab\model\Student.java">
+</file>
+<file name="D:\TRISHA-ACADEMY\DevOPs\devops-java-demo\src\main\java\com\trisha\academy\springlab\repository\StudentRepository.java">
+</file>
+<file name="D:\TRISHA-ACADEMY\DevOPs\devops-java-demo\src\main\java\com\trisha\academy\springlab\SpringLabApplication.java">
+</file>
+<file name="D:\TRISHA-ACADEMY\DevOPs\devops-java-demo\src\test\java\com\trisha\academy\springlab\controller\StudentControllerTest.java">
+</file>
+<file name="D:\TRISHA-ACADEMY\DevOPs\devops-java-demo\src\test\java\com\trisha\academy\springlab\controller\WelcomeControllerTest.java">
+</file>
+<file name="D:\TRISHA-ACADEMY\DevOPs\devops-java-demo\src\test\java\com\trisha\academy\springlab\repository\StudentRepositoryTest.java">
+</file>
+<file name="D:\TRISHA-ACADEMY\DevOPs\devops-java-demo\src\test\java\com\trisha\academy\springlab\SpringLabApplicationTests.java">
+</file>
+<file name="D:\TRISHA-ACADEMY\DevOPs\devops-java-demo\src\test\java\com\trisha\academy\springlab\StudentApiIntegrationTest.java">
+</file>
+</checkstyle>

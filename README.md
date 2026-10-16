@@ -29,6 +29,8 @@ Follow the steps below in order.
 13. [Run with Docker Compose](#step-13--run-with-docker-compose)
 14. [Troubleshooting](#troubleshooting)
 
+To run **several copies** of the app behind nginx, use the separate stack in [DOCKER-SCALE.md](./DOCKER-SCALE.md). Stop this stack first — both files publish ports 9090 and 3307.
+
 ---
 
 ## Step 1 — Install the requirements

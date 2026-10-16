@@ -1,9 +1,17 @@
-name: devops-java-demo
+# Scaled stack: nginx in front of several copies of the Spring Boot app.
+# The Java source is unchanged. Run this file on its own — stop the normal
+# stack first, because both publish ports 9090 and 3307.
+#
+#   docker compose -f docker-compose-scale.yml up -d --build --scale app=3
+#
+# Guide: DOCKER-SCALE.md
+
+name: devops-java-demo-scale
 
 services:
   mysqldb:
     image: mysql:8.4
-    container_name: mysql_database
+    container_name: mysql_database_scale
     restart: unless-stopped
     environment:
       MYSQL_ROOT_PASSWORD: "root@123"
@@ -16,20 +24,43 @@ services:
       - mysql_data:/var/lib/mysql
     networks:
       - devops-net
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$$MYSQL_ROOT_PASSWORD"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 40s
 
   app:
     build: .
     image: devops-java-demo:1.0.0
-    container_name: devops-java-demo
+    # No container_name: a fixed name can exist only once, so scaling would fail.
+    # No ports: only one container can bind host port 9090. nginx publishes it.
     restart: unless-stopped
     environment:
       SPRING_DATASOURCE_URL: "jdbc:mysql://mysqldb:3306/trishadb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
       SPRING_DATASOURCE_USERNAME: trisha
       SPRING_DATASOURCE_PASSWORD: "trisha@123"
-    ports:
-      - "9090:9090"
+    expose:
+      - "9090"
     depends_on:
-      - mysqldb
+      mysqldb:
+        condition: service_healthy
+    deploy:
+      replicas: 3
+    networks:
+      - devops-net
+
+  proxy:
+    image: nginx:alpine
+    container_name: devops-java-demo-proxy
+    restart: unless-stopped
+    ports:
+      - "9090:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - app
     networks:
       - devops-net
 
