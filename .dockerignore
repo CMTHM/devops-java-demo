@@ -12,6 +12,4 @@ docs/
 Dockerfile
 .dockerignore
 compose.yaml
-docker-compose-scale.yml
-nginx/
 .env

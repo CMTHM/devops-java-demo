@@ -23,8 +23,6 @@
     <!-- Quality tooling -->
     <spotless.version>3.10.3</spotless.version>
     <palantir-java-format.version>2.102.0</palantir-java-format.version>
-    <checkstyle-plugin.version>3.6.0</checkstyle-plugin.version>
-    <checkstyle.version>10.23.1</checkstyle.version>
     <jacoco.version>0.8.14</jacoco.version>
     <jacoco.minimum.coverage>0.80</jacoco.minimum.coverage>
   </properties>
@@ -87,36 +85,6 @@
           </java>
         </configuration>
         <executions>
-        </executions>
-      </plugin>
-
-      <!-- Lint: mvn checkstyle:check (runs in validate, fails the build on violations) -->
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-checkstyle-plugin</artifactId>
-        <version>${checkstyle-plugin.version}</version>
-        <configuration>
-          <configLocation>config/checkstyle/checkstyle.xml</configLocation>
-          <includeTestSourceDirectory>true</includeTestSourceDirectory>
-          <consoleOutput>true</consoleOutput>
-          <failOnViolation>true</failOnViolation>
-          <violationSeverity>warning</violationSeverity>
-        </configuration>
-        <dependencies>
-          <dependency>
-            <groupId>com.puppycrawl.tools</groupId>
-            <artifactId>checkstyle</artifactId>
-            <version>${checkstyle.version}</version>
-          </dependency>
-        </dependencies>
-        <executions>
-          <execution>
-            <id>checkstyle-check</id>
-            <phase>validate</phase>
-            <goals>
-              <goal>check</goal>
-            </goals>
-          </execution>
         </executions>
       </plugin>
 

@@ -1,0 +1,25 @@
+# Maven build output
+target/
+
+# Eclipse / IDE output and project files
+bin/
+.classpath
+.project
+.settings/
+.idea/
+.vscode/
+*.iml
+
+# Local database files
+data/
+
+# Python cache from the docs scripts
+__pycache__/
+*.pyc
+
+# Secrets. Copy .env.example to .env on a new machine.
+#.env
+
+# OS files
+.DS_Store
+Thumbs.db

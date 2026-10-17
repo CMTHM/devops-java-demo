@@ -6,15 +6,16 @@
 
 # 1. Start from the official Maven image (Java 21 + Maven, lightweight Alpine Linux)
 FROM maven:3.9-eclipse-temurin-21-alpine
-#FROM maven:3.10-eclipse-temurin-17-alpine
 # 2. Who maintains this image
 LABEL maintainer="Developer Team"
 
 # 3. Go to the /app folder inside the container
 WORKDIR /app
 
-# 4. Copy the project files from your computer into /app
-COPY . .
+# 4. Copy only the files Maven needs. Docker rebuilds the JAR when pom.xml or src changes.
+#    A change to nginx or compose does not rebuild the application.
+COPY pom.xml .
+COPY src ./src
 
 # 5. Build the application JAR (tests are skipped to keep the build fast)
 #    --mount=type=cache keeps downloaded Maven libraries between builds, so they are not downloaded again

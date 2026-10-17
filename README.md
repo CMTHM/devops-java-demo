@@ -5,31 +5,30 @@ A small Spring Boot 3 application used for DevOps training. It has:
 - A **Welcome API** that shows a welcome message.
 - A **Student CRUD API** (insert, read, update, delete) that stores data in a **MySQL** database.
 - **Swagger** pages to try every API from the browser.
-- **Lint** (Checkstyle), **formatting** (Spotless), **JUnit 5 tests** and a **code coverage** check (JaCoCo) that run on every build.
-- A **Docker Compose** setup with two containers — MySQL and the Java app. Full guide: [DOCKER-COMPOSE.md](./DOCKER-COMPOSE.md).
+- **Formatting** (Spotless), **JUnit 5 tests** and a **code coverage** check (JaCoCo). Tests and coverage run on every full build.
+- A **Docker Compose** stack: MySQL, three copies of the Java app, and nginx on port **9090**.
 
-Follow the steps below in order.
+Follow the steps below in order. To get the code and run the stack, use [Start and stop the application](#start-and-stop-the-application).
 
 ---
 
 ## Contents
 
 1. [Install the requirements](#step-1--install-the-requirements)
-2. [Open the project](#step-2--open-the-project)
+2. [Clone or pull the project](#step-2--clone-or-pull-the-project)
 3. [Understand the project structure](#step-3--understand-the-project-structure)
 4. [Build the project](#step-4--build-the-project)
 5. [Run the application](#step-5--run-the-application)
 6. [Call the APIs](#step-6--call-the-apis)
 7. [Use Swagger](#step-7--use-swagger)
 8. [View the data in MySQL](#step-8--view-the-data-in-mysql)
-9. [Run lint and format checks](#step-9--run-lint-and-format-checks)
+9. [Run the format check](#step-9--run-the-format-check)
 10. [Run the JUnit tests](#step-10--run-the-junit-tests)
 11. [Run the full build with coverage](#step-11--run-the-full-build-with-coverage)
 12. [Package and run the JAR](#step-12--package-and-run-the-jar)
 13. [Run with Docker Compose](#step-13--run-with-docker-compose)
-14. [Troubleshooting](#troubleshooting)
-
-To run **several copies** of the app behind nginx, use the separate stack in [DOCKER-SCALE.md](./DOCKER-SCALE.md). Stop this stack first — both files publish ports 9090 and 3307.
+14. [Start and stop the application](#start-and-stop-the-application)
+15. [Troubleshooting](#troubleshooting)
 
 ---
 
@@ -39,6 +38,7 @@ To run **several copies** of the app behind nginx, use the separate stack in [DO
 |------|---------|-----------------------|
 | JDK (Java) | 17 or newer | `java -version` |
 | Maven | 3.8 or newer | `mvn -v` |
+| Git | Any recent version | `git --version` |
 | Docker Desktop | Any recent version | `docker --version` and `docker compose version` |
 
 Run the commands in a terminal. Each should print a version number. If you see "command not found" / "not recognized", install the tool and add it to your `PATH`.
@@ -49,15 +49,37 @@ The app stores its data in **MySQL**. You do not need to install MySQL — it ru
 
 ---
 
-## Step 2 — Open the project
+## Step 2 — Clone or pull the project
 
-Open a terminal and go to the project folder:
+Use **clone** the first time. Use **pull** when the folder is already on your computer.
 
-```bash
-cd D:\TRISHA-ACADEMY\DevOPs\devops-java-demo
+### First time — clone
+
+Replace `<repository-url>` with the Git address of this project (GitHub, or the URL your trainer gives you):
+
+```powershell
+cd D:\TRISHA-ACADEMY\DevOPs
+git clone <repository-url>
+cd devops-java-demo-code
 ```
 
-All commands in this guide are run from this folder (the one that contains `pom.xml`).
+Example:
+
+```powershell
+git clone https://github.com/<owner>/devops-java-demo-code.git
+cd devops-java-demo-code
+```
+
+### Already cloned — pull the latest code
+
+```powershell
+cd D:\TRISHA-ACADEMY\DevOPs\devops-java-demo-code
+git pull
+```
+
+`git pull` downloads new commits from the remote branch into this folder. It does not start the application.
+
+All later commands are run from this folder (the one that contains `pom.xml` and `docker-compose.yml`).
 
 ---
 
@@ -65,14 +87,13 @@ All commands in this guide are run from this folder (the one that contains `pom.
 
 ```text
 devops-java-demo/
-├── pom.xml                         # Maven build: dependencies, lint, tests, coverage
+├── pom.xml                         # Maven build: dependencies, formatting, tests, coverage
 ├── Dockerfile                      # Builds the app image (Step 13)
 ├── compose.yaml                    # Docker Compose: mysql + app containers (Step 13)
 ├── .env                            # Database name, users and passwords used by compose.yaml
 ├── .dockerignore                   # Files Docker does not copy into the image
 ├── DOCKER-COMPOSE.md               # Full Docker Compose guide
 ├── .mvn/jvm.config                 # JVM options Maven needs for the formatter on new JDKs
-├── config/checkstyle/checkstyle.xml# Lint rules
 ├── docs/                           # PDF guides (REST API CRUD guide, Docker course)
 └── src/
     ├── main/
@@ -97,11 +118,10 @@ mvn clean install
 
 What happens, in order:
 
-1. **Lint and format checks** run first (Checkstyle and Spotless). The build stops if the code breaks a rule.
-2. The code is **compiled**.
-3. All **JUnit tests** run.
-4. **Coverage** is checked (at least 80% of lines must be tested).
-5. The application JAR is created in `target/`.
+1. The code is **compiled**.
+2. All **JUnit tests** run.
+3. **Coverage** is checked (at least 80% of lines must be tested).
+4. The application JAR is created in `target/`.
 
 At the end you should see:
 
@@ -296,31 +316,9 @@ The SQL that Hibernate runs is also printed in the application console (`spring.
 
 ---
 
-## Step 9 — Run lint and format checks
+## Step 9 — Run the format check
 
-Two tools keep the code clean. Both run automatically at the start of every build, so a build fails if the code breaks a rule.
-
-| Tool | What it checks | Rules |
-|------|----------------|-------|
-| **Checkstyle** (lint) | Unused imports, `*` imports, naming, missing braces, empty catch blocks, public fields, long methods, too many parameters, etc. | `config/checkstyle/checkstyle.xml` |
-| **Spotless** (format) | Indentation, spacing, import order, trailing whitespace (Palantir Java Format) | `pom.xml` |
-
-### 9.1 Run the lint check
-
-```bash
-mvn checkstyle:check
-```
-
-- Pass: `You have 0 Checkstyle violations.`
-- Fail: each problem is printed with the file, line number and rule name, for example:
-
-  ```text
-  [WARN] src/main/java/.../StudentController.java:[12,8] (imports) UnusedImports: Unused import - java.util.Map.
-  ```
-
-  Open the file at that line, fix it, and run the command again.
-
-### 9.2 Run the format check
+**Spotless** checks indentation, spacing, import order and trailing whitespace (Palantir Java Format). The rules are in `pom.xml`. Run it yourself; it is not part of `mvn clean install`.
 
 ```bash
 mvn spotless:check
@@ -385,7 +383,7 @@ After `mvn test`, detailed results are in `target/surefire-reports/`.
 mvn clean verify
 ```
 
-This runs everything — lint, format check, compile, all tests — and then checks **code coverage** with JaCoCo. The build fails if less than **80%** of the code lines are covered by tests.
+This compiles the code, runs all tests, and then checks **code coverage** with JaCoCo. The build fails if less than **80%** of the code lines are covered by tests.
 
 Open the coverage report in the browser:
 
@@ -412,14 +410,17 @@ The application starts on port 9090, the same as Step 5 (MySQL must be running: 
 
 ## Step 13 — Run with Docker Compose
 
-Docker packages the application, Java and Maven into one **image**. A running image is called a **container**. **Docker Compose** starts several containers together from one file, `compose.yaml`. This project uses two containers:
+Docker packages the application, Java and Maven into one **image**. A running image is called a **container**. **Docker Compose** starts the containers in `docker-compose.yml` together. The project name in that file is `devops-java-demo`. Run every `docker compose` command from the project folder so Compose uses that name.
 
 | Container | Service | What it runs | Port on your computer |
 |-----------|---------|--------------|-----------------------|
-| `trisha-mysql` | `mysql` | MySQL 8.4 (official image) | 3307 |
-| `devops-java-demo` | `app` | This Spring Boot app (built from the `Dockerfile`) | 9090 |
+| `mysql_database` | `mysqldb` | MySQL 8.4 | none (only the other containers can reach port 3306) |
+| `devops-java-demo-app-1`, `app-2`, `app-3` | `app` | Three copies of this Spring Boot app | none (nginx calls them) |
+| `devops-java-nginx` | `proxy` | nginx | **9090** |
 
-The full Compose guide — every line of `compose.yaml`, how the app finds MySQL, persistence tests, commands and interview questions — is in **[DOCKER-COMPOSE.md](./DOCKER-COMPOSE.md)**.
+Open the app at http://localhost:9090. nginx waits until every app copy is healthy, and each app waits until MySQL is healthy.
+
+The line-by-line Compose guide is in **[DOCKER-COMPOSE.md](./DOCKER-COMPOSE.md)**. Start and stop commands for this file are in the next section.
 
 ### 13.1 The Dockerfile, line by line
 
@@ -453,39 +454,31 @@ Check the engine is running — it should print server details with no error:
 docker info
 ```
 
-### 13.3 Build and start both containers
+### 13.3 Build and start
 
-From the project folder (stop `mvn spring-boot:run` first if it is running — it uses port 9090):
+Use [Start and stop the application](#start-and-stop-the-application). Short version, from the project folder:
 
-```bash
-docker compose up -d --build
+```powershell
+docker compose up -d
 ```
 
-- `up` — create the network, the volume and both containers, and start them.
-- `-d` — run in the background.
-- `--build` — build the app image from the `Dockerfile` first.
-
-Compose starts MySQL first and starts the app only when MySQL is **healthy**. The first run takes a few minutes (it downloads `mysql:8.4`, the Maven image and the Maven libraries).
+That pulls the image named in `.env` (`DOCKERHUB_USER` and `IMAGE_TAG`) and starts MySQL, the three app copies, and nginx.
 
 ### 13.4 Check the containers
 
-```bash
+```powershell
 docker compose ps
 ```
 
-```text
-NAME               SERVICE   STATUS                    PORTS
-devops-java-demo   app       Up 14 seconds             0.0.0.0:9090->9090/tcp
-trisha-mysql       mysql     Up 36 seconds (healthy)   0.0.0.0:3307->3306/tcp
-```
+`mysqldb` and each `app` copy should show `(healthy)`. `proxy` publishes `0.0.0.0:9090->80/tcp`.
 
-Watch the app logs until you see `Started SpringLabApplication` (press `Ctrl + C` to stop watching — the container keeps running):
+Watch the app logs (press `Ctrl + C` to stop watching — the containers keep running):
 
-```bash
+```powershell
 docker compose logs -f app
 ```
 
-Inside Compose the app connects to `jdbc:mysql://mysql:3306/trishadb` — `mysql` is the **service name**, which Docker's DNS resolves to the MySQL container. The values come from environment variables in `compose.yaml`, which override `application.properties`.
+Inside Compose the app connects to `jdbc:mysql://mysqldb:3306/trishadb`. `mysqldb` is the **service name**. Docker DNS resolves it to the MySQL container. Those values come from `docker-compose.yml` and override `application.properties`.
 
 ### 13.5 Test the application
 
@@ -493,7 +486,7 @@ Inside Compose the app connects to `jdbc:mysql://mysql:3306/trishadb` — `mysql
 |------|-----|
 | Welcome API | http://localhost:9090/name |
 | Swagger UI | http://localhost:9090/swagger-ui/index.html |
-| MySQL (Workbench / DBeaver) | `localhost:3307`, user `trisha`, password `trisha@123` |
+| MySQL from your computer | Not published. From inside Docker: service `mysqldb`, port `3306`, user `trisha` |
 
 Everything from Steps 6–8 works the same. From a terminal:
 
@@ -510,31 +503,137 @@ Expected output: `Welcome to TrishaAcademy`
 | Show the maintainer and other labels | `docker inspect --format "{{json .Config.Labels}}" devops-java-demo:1.0.0` |
 | Show image history (one layer per instruction) | `docker history devops-java-demo:1.0.0` |
 | Open a shell inside the app container | `docker compose exec app sh` |
-| Open the MySQL client | `docker compose exec mysql mysql -utrisha -ptrisha@123 trishadb` |
-| CPU and memory usage | `docker stats devops-java-demo trisha-mysql` |
+| Open the MySQL client | `docker compose exec mysqldb mysql -utrisha -ptrisha@123 trishadb` |
+| CPU and memory usage | `docker stats` |
 | Restart one service | `docker compose restart app` |
 | See the database volume | `docker volume ls --filter name=devops-java-demo` |
 
 ### 13.7 Stop and clean up
 
-```bash
-# Stop and remove both containers and the network (the database volume is KEPT)
-docker compose down
-
-# Also delete the database volume (all students are deleted)
-docker compose down -v
-
-# (Optional) remove the app image
-docker rmi devops-java-demo:1.0.0
-```
+See [Stop the application](#5-stop-the-application). `docker compose down` removes MySQL, all three app copies, nginx, and the network. The database volume is kept. `docker compose down -v` deletes that volume too.
 
 ### 13.8 Rebuild after a code change
 
-```bash
-docker compose up -d --build app
+```powershell
+.\deploy.ps1
 ```
 
-Only the app image is rebuilt and the app container recreated. MySQL keeps running, and the students are still there because they are stored in MySQL's volume, not in the app image.
+This builds a new image tag, pushes it to Docker Hub, and starts that tag. MySQL keeps running, and the students stay in MySQL's volume.
+
+---
+
+## Start and stop the application
+
+Do these steps in order. Docker Desktop must be running before step 3.
+
+The Compose project name is `devops-java-demo`. `docker compose down` stops only containers in that project.
+
+### 1. Get the code with Git
+
+**First time** — clone the repository, then enter the folder:
+
+```powershell
+cd D:\TRISHA-ACADEMY\DevOPs
+git clone <repository-url>
+cd devops-java-demo-code
+```
+
+**Later** — you already have the folder. Download the latest commits, then stay in that folder:
+
+```powershell
+cd D:\TRISHA-ACADEMY\DevOPs\devops-java-demo-code
+git pull
+```
+
+Check that `.env` is present. It must contain `DOCKERHUB_USER` and `IMAGE_TAG`. Compose reads those values when it starts the app image.
+
+### 2. Log in to Docker Hub
+
+Required before a new release (`.\deploy.ps1`). Skip this if you only start the image that is already on Docker Hub.
+
+```powershell
+docker login
+```
+
+Use the Docker Hub account that owns `chintamani/devops-java-demo`.
+
+### 3. Start the application
+
+This pulls the image named in `.env` (`chintamani/devops-java-demo` and `IMAGE_TAG`, default `latest`) and starts the stack:
+
+```powershell
+docker compose up -d
+```
+
+What happens, in order:
+
+1. MySQL starts. Compose waits until its health check passes.
+2. Three app containers start. Compose waits until each one answers `http://localhost:9090/name` inside the container.
+3. nginx starts and publishes http://localhost:9090.
+
+Check:
+
+```powershell
+docker compose ps
+```
+
+Then open:
+
+- Welcome API: http://localhost:9090/name
+- Swagger: http://localhost:9090/swagger-ui/index.html
+
+### 4. Start a new release
+
+Use this after you change the Java code. You must already be logged in to Docker Hub (`docker login`).
+
+```powershell
+.\deploy.ps1
+```
+
+The script sets a new `IMAGE_TAG` (date and time), then runs:
+
+```powershell
+docker compose build app
+docker compose push app
+docker compose up -d --no-build
+```
+
+### 5. Stop the application
+
+```powershell
+docker compose down
+```
+
+This stops and removes:
+
+- `mysql_database`
+- `devops-java-demo-app-1`, `app-2`, and `app-3`
+- `devops-java-nginx`
+- the project network
+
+The MySQL volume is kept, so student rows are still there the next time you start.
+
+Confirm they are gone:
+
+```powershell
+docker compose ps
+```
+
+The table should have no rows.
+
+To stop **and delete the database**:
+
+```powershell
+docker compose down -v
+```
+
+### If `down` does not stop the app
+
+`down` ignores containers that were started under a different Compose project name. Stop the `devops-java-demo` project explicitly:
+
+```powershell
+docker compose -p devops-java-demo down
+```
 
 ---
 
@@ -542,19 +641,21 @@ Only the app image is rebuilt and the app container recreated. MySQL keeps runni
 
 | Goal | Command |
 |------|---------|
-| Start only MySQL (for local runs) | `docker compose up -d mysql` |
-| Run the app | `mvn spring-boot:run` |
-| Lint check | `mvn checkstyle:check` |
+| Clone the project the first time | `git clone <repository-url>` |
+| Update an existing folder | `git pull` |
+| Start MySQL, 3 apps, and nginx | `docker compose up -d` |
+| Release a new image and start it | `.\deploy.ps1` |
+| Run the app on your computer | `mvn spring-boot:run` |
 | Format check | `mvn spotless:check` |
 | Fix formatting | `mvn spotless:apply` |
 | Run JUnit tests | `mvn test` |
 | Full build + coverage | `mvn clean verify` |
 | Build the JAR | `mvn clean package` |
 | Run the JAR | `java -jar target/devops-java-demo-1.0.0.jar` |
-| Build and start MySQL + app | `docker compose up -d --build` |
 | Container status | `docker compose ps` |
 | App logs | `docker compose logs -f app` |
 | Stop everything (keep data) | `docker compose down` |
+| Stop the `devops-java-demo` project by name | `docker compose -p devops-java-demo down` |
 | Reset the database | `docker compose down -v` |
 
 ---
@@ -581,10 +682,6 @@ kill -9 <PID>
 
 Replace `<PID>` with the process id from the output, then start the app again.
 
-### Build fails with Checkstyle violations
-
-Read the file name, line number and rule in the error, fix the code, and run `mvn checkstyle:check` again.
-
 ### Build fails with "The following files had format violations"
 
 Run `mvn spotless:apply`, then build again.
@@ -604,5 +701,5 @@ New code was added without tests. Add JUnit tests for it, then run `mvn clean ve
 | App log: `Access denied for user 'trisha'` | `.env` was changed after the first start. Run `docker compose down -v` (deletes the data), then `docker compose up -d` |
 | `container name "/devops-java-demo" is already in use` | An old container from `docker run`. `docker rm -f devops-java-demo`, then run again |
 | `Could not transfer artifact ... Premature end of Content-Length` | A Maven download was interrupted by the network. Run `docker build` again — libraries already downloaded are kept in the cache |
-| `docker build` fails with Checkstyle or format errors | The lint gate runs inside the build. Run `mvn spotless:apply` and fix Checkstyle errors (Step 9), then build again |
+| `docker build` fails with format errors | Run `mvn spotless:apply` (Step 9), then build again |
 | Page does not open but the container is running | Check the port in the logs (`Tomcat started on port ...`) matches the `-p` mapping |
